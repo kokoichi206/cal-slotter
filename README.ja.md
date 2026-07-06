@@ -4,6 +4,29 @@
 
 Google Calendar の freebusy から複数人の空き時間を探し、仮押さえイベントの作成と確定後の削除を行う CLI。
 
+## インストール
+
+[最新の GitHub Release](https://github.com/kokoichi206/cal-slotter/releases/latest) から OS と CPU に合う archive をダウンロードし、`slotter` binary を `PATH` の通った場所に置く。
+
+macOS / Linux の例:
+
+```bash
+tar -xzf slotter_*.tar.gz
+chmod +x slotter
+mkdir -p ~/.local/bin
+mv slotter ~/.local/bin/
+slotter version
+```
+
+Windows の場合は、release page から `.zip` archive をダウンロードし、`slotter.exe` を `PATH` の通った場所に置く。
+
+Go で source から install する場合:
+
+```bash
+go install github.com/kokoichi206/cal-slotter/cmd/slotter@latest
+slotter version
+```
+
 ## セットアップ
 
 ### 1. Google Cloud で OAuth クライアントを作る
@@ -46,48 +69,49 @@ mv ~/Downloads/client_secret_*.json ~/.config/cal-slotter/credentials.json
 ### 4. 初回認証する
 
 ```bash
-go run ./cmd/slotter auth
+slotter auth
 ```
 
 表示された URL をブラウザで開き、共有アカウントで許可する。成功すると `~/.config/cal-slotter/token.json` が作られる。
 
-## インストール
+## リリース
+
+`v*` tag を push すると、GitHub Actions 上の GoReleaser が GitHub Release を作成する。
+
+tag を打つ前に、ローカルで release artifact を確認する。
 
 ```bash
-go install github.com/kokoichi206/cal-slotter/cmd/slotter@latest
-slotter version
+go install github.com/goreleaser/goreleaser/v2@latest
+goreleaser release --snapshot --clean
 ```
 
-リリースビルドでは Go の ldflags で version 情報を埋め込める。
+tag を作って push する。
 
 ```bash
-go build -ldflags "\
-  -X github.com/kokoichi206/cal-slotter/internal/version.Version=v0.1.0 \
-  -X github.com/kokoichi206/cal-slotter/internal/version.Commit=$(git rev-parse --short HEAD) \
-  -X github.com/kokoichi206/cal-slotter/internal/version.Date=$(date -u +%Y-%m-%d)" \
-  ./cmd/slotter
+git tag v0.1.0
+git push origin v0.1.0
 ```
+
+release workflow は macOS、Linux、Windows の amd64 / arm64 向け archive と checksums file をアップロードする。
 
 ## 使い方
 
 ```bash
-go run ./cmd/slotter find --duration 60 \
+slotter find --duration 60 \
   --range "2026-07-07 10:00-18:00" \
   --range "2026-07-08 10:00-18:00" \
   --count 5
 
-go run ./cmd/slotter hold \
+slotter hold \
   --title "AI 導入プロ-○○様7月初回" \
   --range "2026-07-07 10:00-18:00" \
   --range "2026-07-08 10:00-18:00" \
   --count 5
 
-go run ./cmd/slotter confirm \
+slotter confirm \
   --title "AI 導入プロ-○○様7月初回" \
   --keep "2026-07-08 10:30"
 ```
-
-インストール後は `go run ./cmd/slotter` を `slotter` に置き換えて実行できる。
 
 候補がない場合、stdout は空のまま stderr に `no available slots found` を出す。JSON で確認したい場合は `--json` を付ける。
 

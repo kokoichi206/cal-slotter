@@ -4,6 +4,29 @@
 
 A CLI tool for finding shared availability across multiple Google Calendars, creating temporary hold events, and cleaning up unselected holds after a meeting time is confirmed.
 
+## Install
+
+Download the archive for your OS and CPU from the [latest GitHub Release](https://github.com/kokoichi206/cal-slotter/releases/latest), then place the `slotter` binary somewhere on your `PATH`.
+
+For macOS or Linux:
+
+```bash
+tar -xzf slotter_*.tar.gz
+chmod +x slotter
+mkdir -p ~/.local/bin
+mv slotter ~/.local/bin/
+slotter version
+```
+
+For Windows, download the `.zip` archive from the release page and add `slotter.exe` to your `PATH`.
+
+If you prefer installing from source with Go:
+
+```bash
+go install github.com/kokoichi206/cal-slotter/cmd/slotter@latest
+slotter version
+```
+
 ## Setup
 
 ### 1. Create an OAuth client in Google Cloud
@@ -46,48 +69,49 @@ Create `~/.config/cal-slotter/config.json`.
 ### 4. Authenticate once
 
 ```bash
-go run ./cmd/slotter auth
+slotter auth
 ```
 
 Open the printed URL in a browser and authorize with the shared Google account. On success, `~/.config/cal-slotter/token.json` is created.
 
-## Install
+## Release
+
+Releases are built by GoReleaser on GitHub Actions when a `v*` tag is pushed.
+
+Before tagging, verify the release artifacts locally:
 
 ```bash
-go install github.com/kokoichi206/cal-slotter/cmd/slotter@latest
-slotter version
+go install github.com/goreleaser/goreleaser/v2@latest
+goreleaser release --snapshot --clean
 ```
 
-Release builds can embed version metadata with Go ldflags.
+Then create and push a tag:
 
 ```bash
-go build -ldflags "\
-  -X github.com/kokoichi206/cal-slotter/internal/version.Version=v0.1.0 \
-  -X github.com/kokoichi206/cal-slotter/internal/version.Commit=$(git rev-parse --short HEAD) \
-  -X github.com/kokoichi206/cal-slotter/internal/version.Date=$(date -u +%Y-%m-%d)" \
-  ./cmd/slotter
+git tag v0.1.0
+git push origin v0.1.0
 ```
+
+The release workflow uploads archives for macOS, Linux, and Windows on amd64 and arm64, plus a checksums file.
 
 ## Usage
 
 ```bash
-go run ./cmd/slotter find --duration 60 \
+slotter find --duration 60 \
   --range "2026-07-07 10:00-18:00" \
   --range "2026-07-08 10:00-18:00" \
   --count 5
 
-go run ./cmd/slotter hold \
+slotter hold \
   --title "Customer kickoff" \
   --range "2026-07-07 10:00-18:00" \
   --range "2026-07-08 10:00-18:00" \
   --count 5
 
-go run ./cmd/slotter confirm \
+slotter confirm \
   --title "Customer kickoff" \
   --keep "2026-07-08 10:30"
 ```
-
-After installation, replace `go run ./cmd/slotter` with `slotter`.
 
 When no slot is available, stdout stays empty and stderr prints `no available slots found`. Use `--json` to inspect the machine-readable result.
 
