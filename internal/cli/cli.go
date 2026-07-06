@@ -15,6 +15,7 @@ import (
 	"github.com/kokoichi206/cal-slotter/internal/googlecal"
 	"github.com/kokoichi206/cal-slotter/internal/slotter"
 	"github.com/kokoichi206/cal-slotter/internal/timefmt"
+	"github.com/kokoichi206/cal-slotter/internal/version"
 )
 
 type stringList []string
@@ -47,7 +48,7 @@ type findOptions struct {
 	Debug           bool
 }
 
-// Run executes the schedule CLI with explicit streams for testability.
+// Run executes the slotter CLI with explicit streams for testability.
 func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	if len(args) == 0 {
 		printUsage(stderr)
@@ -63,6 +64,8 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		return runHold(args[1:], stdin, stdout, stderr)
 	case "confirm":
 		return runConfirm(args[1:], stdout, stderr)
+	case "version":
+		return runVersion(args[1:], stdout, stderr)
 	case "help", "-h", "--help":
 		printUsage(stdout)
 		return nil
@@ -70,6 +73,18 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		printUsage(stderr)
 		return fmt.Errorf("unknown command %q", args[0])
 	}
+}
+
+func runVersion(args []string, stdout, stderr io.Writer) error {
+	fs := newFlagSet("slotter version", stderr)
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if fs.NArg() > 0 {
+		return fmt.Errorf("version does not accept arguments: %s", strings.Join(fs.Args(), " "))
+	}
+	fmt.Fprintln(stdout, version.Current().String())
+	return nil
 }
 
 func runAuth(args []string, stdout, stderr io.Writer) error {
@@ -82,7 +97,7 @@ func runAuth(args []string, stdout, stderr io.Writer) error {
 		return err
 	}
 
-	fs := newFlagSet("schedule auth", stderr)
+	fs := newFlagSet("slotter auth", stderr)
 	credentialsPath := fs.String("credentials", defaultCredentials, "OAuth client credentials JSON path")
 	tokenPath := fs.String("token", defaultToken, "OAuth token JSON path")
 	if err := fs.Parse(args); err != nil {
@@ -99,7 +114,7 @@ func runFind(args []string, stdout, stderr io.Writer) error {
 	}
 
 	var ranges stringList
-	fs := newFlagSet("schedule find", stderr)
+	fs := newFlagSet("slotter find", stderr)
 	configureSharedFlags(fs, &cfg)
 	fs.Var(&ranges, "range", "candidate window: YYYY-MM-DD HH:MM-HH:MM")
 	durationMinutes := fs.Int("duration", 60, "meeting duration in minutes")
@@ -190,7 +205,7 @@ func runHold(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 
 	var slotValues stringList
 	var ranges stringList
-	fs := newFlagSet("schedule hold", stderr)
+	fs := newFlagSet("slotter hold", stderr)
 	configureSharedFlags(fs, &cfg)
 	title := fs.String("title", "", "case title")
 	fs.Var(&slotValues, "slot", "hold slot: YYYY-MM-DD HH:MM-HH:MM")
@@ -278,7 +293,7 @@ func runConfirm(args []string, stdout, stderr io.Writer) error {
 		return err
 	}
 
-	fs := newFlagSet("schedule confirm", stderr)
+	fs := newFlagSet("slotter confirm", stderr)
 	configureSharedFlags(fs, &cfg)
 	title := fs.String("title", "", "case title")
 	keepValue := fs.String("keep", "", "slot to keep: YYYY-MM-DD HH:MM")
@@ -563,5 +578,5 @@ func newFlagSet(name string, stderr io.Writer) *flag.FlagSet {
 }
 
 func printUsage(w io.Writer) {
-	fmt.Fprintln(w, "usage: schedule <auth|find|hold|confirm> [options]")
+	fmt.Fprintln(w, "usage: slotter <auth|find|hold|confirm|version> [options]")
 }
