@@ -9,14 +9,14 @@ Google Calendar の freebusy から複数人の空き時間を探し、仮押さ
 macOS / Linux の場合:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kokoichi206/cal-slotter/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/kokoichi206/cal-slotter/main/scripts/install.sh | sh
 slotter version
 ```
 
 installer は [GitHub Releases](https://github.com/kokoichi206/cal-slotter/releases/latest) の最新 binary をダウンロードし、`~/.local/bin` に配置する。別の場所に入れる場合は `SLOTTER_INSTALL_DIR` を指定する。
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kokoichi206/cal-slotter/main/install.sh | SLOTTER_INSTALL_DIR=/usr/local/bin sh
+curl -fsSL https://raw.githubusercontent.com/kokoichi206/cal-slotter/main/scripts/install.sh | SLOTTER_INSTALL_DIR=/usr/local/bin sh
 ```
 
 既存 install を更新する場合:
