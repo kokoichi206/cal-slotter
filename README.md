@@ -4,6 +4,14 @@
 
 A CLI tool for finding shared availability across multiple Google Calendars, creating temporary hold events, and cleaning up unselected holds after a meeting time is confirmed.
 
+## Features
+
+- Find shared availability across multiple Google Calendars.
+- Create temporary hold events in Google Calendar.
+- Delete unselected hold events after a meeting time is confirmed.
+- Limit target members per command with `--members`.
+- Attach Google Meet to hold events and enable automatic recording, transcription, and Gemini notes.
+
 ## Install
 
 For macOS or Linux:
@@ -62,6 +70,8 @@ Use the shared Google account that can access the target calendars.
 2. Create an OAuth client ID.
 3. Choose "Desktop app" as the application type.
 4. Download the OAuth client JSON.
+
+If you use `hold --meet-artifacts` to automatically generate Google Meet recordings, transcripts, and Gemini notes, also enable the Google Meet API in the same project.
 
 ### 2. Place the credentials file
 
@@ -138,7 +148,8 @@ slotter hold \
   --title "Customer kickoff" \
   --range "2026-07-07 10:00-18:00" \
   --range "2026-07-08 10:00-18:00" \
-  --count 5
+  --count 5 \
+  --meet-artifacts
 
 slotter confirm \
   --title "Customer kickoff" \
@@ -151,7 +162,11 @@ When no slot is available, stdout stays empty and stderr prints `no available sl
 
 `hold` can accept explicit `--slot` values. When `--slot` is omitted and `--range` is provided, it runs the same availability search as `find` and creates holds for the selected slots.
 
+`confirm` keeps the hold event whose start time matches `--keep` for the same `--title` and deletes the other matching hold events.
+
 Calendar invitation and deletion emails are not sent by default. Add `--send-updates` only when you want Google Calendar to send update emails.
+
+Add `--meet-artifacts` to `hold` to attach Google Meet and enable automatic recording, transcription, and Gemini notes. If your existing `token.json` was created before this scope was added, run `slotter auth` again and grant the new permission.
 
 ## Config
 

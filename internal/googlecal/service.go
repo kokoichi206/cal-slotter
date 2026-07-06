@@ -15,6 +15,7 @@ import (
 )
 
 const calendarAPIBase = "https://www.googleapis.com/calendar/v3"
+const meetAPIBase = "https://meet.googleapis.com/v2"
 
 // Service wraps Google Calendar operations used by the CLI.
 type Service struct {
@@ -61,17 +62,66 @@ type eventAttendee struct {
 }
 
 type event struct {
-	ID           string          `json:"id,omitempty"`
-	Summary      string          `json:"summary,omitempty"`
-	Attendees    []eventAttendee `json:"attendees,omitempty"`
-	Transparency string          `json:"transparency,omitempty"`
-	Start        *eventDateTime  `json:"start,omitempty"`
-	End          *eventDateTime  `json:"end,omitempty"`
+	ID             string               `json:"id,omitempty"`
+	Summary        string               `json:"summary,omitempty"`
+	HangoutLink    string               `json:"hangoutLink,omitempty"`
+	Attendees      []eventAttendee      `json:"attendees,omitempty"`
+	Transparency   string               `json:"transparency,omitempty"`
+	Start          *eventDateTime       `json:"start,omitempty"`
+	End            *eventDateTime       `json:"end,omitempty"`
+	ConferenceData *eventConferenceData `json:"conferenceData,omitempty"`
+}
+
+type eventConferenceData struct {
+	CreateRequest *conferenceCreateRequest `json:"createRequest,omitempty"`
+	ConferenceID  string                   `json:"conferenceId,omitempty"`
+	EntryPoints   []conferenceEntryPoint   `json:"entryPoints,omitempty"`
+}
+
+type conferenceCreateRequest struct {
+	RequestID             string                `json:"requestId"`
+	ConferenceSolutionKey conferenceSolutionKey `json:"conferenceSolutionKey"`
+}
+
+type conferenceSolutionKey struct {
+	Type string `json:"type"`
+}
+
+type conferenceEntryPoint struct {
+	EntryPointType string `json:"entryPointType,omitempty"`
+	URI            string `json:"uri,omitempty"`
 }
 
 type eventsListResponse struct {
 	Items         []event `json:"items"`
 	NextPageToken string  `json:"nextPageToken"`
+}
+
+type meetSpace struct {
+	Name   string           `json:"name,omitempty"`
+	Config *meetSpaceConfig `json:"config,omitempty"`
+}
+
+type meetSpaceConfig struct {
+	ArtifactConfig *meetArtifactConfig `json:"artifactConfig,omitempty"`
+}
+
+type meetArtifactConfig struct {
+	RecordingConfig     *meetRecordingConfig     `json:"recordingConfig,omitempty"`
+	TranscriptionConfig *meetTranscriptionConfig `json:"transcriptionConfig,omitempty"`
+	SmartNotesConfig    *meetSmartNotesConfig    `json:"smartNotesConfig,omitempty"`
+}
+
+type meetRecordingConfig struct {
+	AutoRecordingGeneration string `json:"autoRecordingGeneration"`
+}
+
+type meetTranscriptionConfig struct {
+	AutoTranscriptionGeneration string `json:"autoTranscriptionGeneration"`
+}
+
+type meetSmartNotesConfig struct {
+	AutoSmartNotesGeneration string `json:"autoSmartNotesGeneration"`
 }
 
 // HoldTitle formats the shared title used for temporary hold events.
@@ -135,7 +185,7 @@ func (s *Service) BusyByMember(ctx context.Context, members []string, timeMin, t
 }
 
 // CreateHolds creates temporary hold events for the given slots.
-func (s *Service) CreateHolds(ctx context.Context, title string, slots []slotter.Interval, members []string, timezone string, sendUpdates bool) error {
+func (s *Service) CreateHolds(ctx context.Context, title string, slots []slotter.Interval, members []string, timezone string, sendUpdates bool, meetArtifacts bool) error {
 	attendees := make([]eventAttendee, 0, len(members))
 	for _, member := range members {
 		attendees = append(attendees, eventAttendee{Email: member})
@@ -155,15 +205,98 @@ func (s *Service) CreateHolds(ctx context.Context, title string, slots []slotter
 				TimeZone: timezone,
 			},
 		}
+		if meetArtifacts {
+			requestID, err := newConferenceRequestID()
+			if err != nil {
+				return fmt.Errorf("create conference request ID: %w", err)
+			}
+			body.ConferenceData = &eventConferenceData{
+				CreateRequest: &conferenceCreateRequest{
+					RequestID: requestID,
+					ConferenceSolutionKey: conferenceSolutionKey{
+						Type: "hangoutsMeet",
+					},
+				},
+			}
+		}
 
 		endpoint := calendarAPIBase + "/calendars/" + url.PathEscape(s.calendarID) + "/events"
 		query := url.Values{"sendUpdates": []string{sendUpdatesValue(sendUpdates)}}
-		if err := s.doJSON(ctx, http.MethodPost, endpoint, query, body, nil); err != nil {
+		var created event
+		var out any
+		if meetArtifacts {
+			query.Set("conferenceDataVersion", "1")
+			out = &created
+		}
+		if err := s.doJSON(ctx, http.MethodPost, endpoint, query, body, out); err != nil {
 			return fmt.Errorf("create hold %s: %w", slot.Start.Format(time.RFC3339), err)
+		}
+		if meetArtifacts {
+			if err := s.enableAutoArtifacts(ctx, created); err != nil {
+				return fmt.Errorf("enable Meet artifacts for hold %s: %w", slot.Start.Format(time.RFC3339), err)
+			}
 		}
 	}
 
 	return nil
+}
+
+func (s *Service) enableAutoArtifacts(ctx context.Context, calendarEvent event) error {
+	meetingCode, err := s.meetingCodeForEvent(ctx, calendarEvent)
+	if err != nil {
+		return err
+	}
+
+	var space meetSpace
+	if err := s.doJSON(ctx, http.MethodGet, meetAPIBase+"/spaces/"+url.PathEscape(meetingCode), nil, nil, &space); err != nil {
+		return err
+	}
+
+	body := meetSpace{
+		Config: &meetSpaceConfig{
+			ArtifactConfig: &meetArtifactConfig{
+				RecordingConfig: &meetRecordingConfig{
+					AutoRecordingGeneration: "ON",
+				},
+				TranscriptionConfig: &meetTranscriptionConfig{
+					AutoTranscriptionGeneration: "ON",
+				},
+				SmartNotesConfig: &meetSmartNotesConfig{
+					AutoSmartNotesGeneration: "ON",
+				},
+			},
+		},
+	}
+
+	return s.doJSON(ctx, http.MethodPatch, meetAPIBase+"/"+space.Name, nil, body, nil)
+}
+
+func (s *Service) meetingCodeForEvent(ctx context.Context, calendarEvent event) (string, error) {
+	if code := meetingCode(calendarEvent); code != "" {
+		return code, nil
+	}
+
+	endpoint := calendarAPIBase + "/calendars/" + url.PathEscape(s.calendarID) + "/events/" + url.PathEscape(calendarEvent.ID)
+	query := url.Values{"conferenceDataVersion": []string{"1"}}
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		var latest event
+		if err := s.doJSON(ctx, http.MethodGet, endpoint, query, nil, &latest); err != nil {
+			return "", err
+		}
+		if code := meetingCode(latest); code != "" {
+			return code, nil
+		}
+		if !time.Now().Before(deadline) {
+			return "", fmt.Errorf("Meet conference data was not generated for event %s", calendarEvent.ID)
+		}
+
+		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
+		case <-time.After(time.Second):
+		}
+	}
 }
 
 // Confirm deletes hold events with the same title except the slot to keep.
@@ -296,6 +429,42 @@ func eventStart(event event) (time.Time, error) {
 
 func sameMinute(a, b time.Time) bool {
 	return a.Truncate(time.Minute).Equal(b.Truncate(time.Minute))
+}
+
+func newConferenceRequestID() (string, error) {
+	state, err := randomState()
+	if err != nil {
+		return "", err
+	}
+	return "slotter-" + state, nil
+}
+
+func meetingCode(event event) string {
+	if event.ConferenceData != nil {
+		if event.ConferenceData.ConferenceID != "" {
+			return event.ConferenceData.ConferenceID
+		}
+		for _, entryPoint := range event.ConferenceData.EntryPoints {
+			if entryPoint.EntryPointType == "video" {
+				return meetingCodeFromURL(entryPoint.URI)
+			}
+		}
+	}
+	return meetingCodeFromURL(event.HangoutLink)
+}
+
+func meetingCodeFromURL(value string) string {
+	if value == "" {
+		return ""
+	}
+	parsed, err := url.Parse(value)
+	if err != nil {
+		return ""
+	}
+	if parsed.Host != "meet.google.com" {
+		return ""
+	}
+	return strings.Trim(parsed.Path, "/")
 }
 
 func formatCalendarErrors(errors []calendarError) string {
