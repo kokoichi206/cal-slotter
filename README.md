@@ -68,6 +68,49 @@ go build -ldflags "\
   ./cmd/slotter
 ```
 
+## Development
+
+This project uses Go 1.26.4. To install the local Go 1.26.4 wrapper:
+
+```bash
+go install golang.org/dl/go1.26.4@latest
+go1.26.4 download
+go1.26.4 version
+```
+
+If `go1.26.4` is not on your `PATH`, add `$(go env GOPATH)/bin` to `PATH`.
+
+```bash
+export PATH="$(go env GOPATH)/bin:$PATH"
+```
+
+With `GOTOOLCHAIN=auto`, ordinary `go` commands also download and use the Go version required by `go.mod` inside this repository.
+
+```bash
+go test ./...
+go vet ./...
+```
+
+## Release
+
+Releases are built by GoReleaser on GitHub Actions when a `v*` tag is pushed.
+
+Before tagging, verify the release artifacts locally:
+
+```bash
+go install github.com/goreleaser/goreleaser/v2@latest
+goreleaser release --snapshot --clean
+```
+
+Then create and push a tag:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The release workflow uploads archives for macOS, Linux, and Windows on amd64 and arm64, plus a checksums file.
+
 ## Usage
 
 ```bash

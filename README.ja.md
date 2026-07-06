@@ -68,6 +68,49 @@ go build -ldflags "\
   ./cmd/slotter
 ```
 
+## 開発
+
+このプロジェクトは Go 1.26.4 を使う。ローカルに Go 1.26.4 wrapper を入れるには以下を実行する。
+
+```bash
+go install golang.org/dl/go1.26.4@latest
+go1.26.4 download
+go1.26.4 version
+```
+
+`go1.26.4` が `PATH` にない場合は `$(go env GOPATH)/bin` を `PATH` に追加する。
+
+```bash
+export PATH="$(go env GOPATH)/bin:$PATH"
+```
+
+`GOTOOLCHAIN=auto` であれば、このリポジトリ内の通常の `go` コマンドも `go.mod` が要求する Go version を自動取得して使う。
+
+```bash
+go test ./...
+go vet ./...
+```
+
+## リリース
+
+`v*` tag を push すると、GitHub Actions 上の GoReleaser が GitHub Release を作成する。
+
+tag を打つ前に、ローカルで release artifact を確認する。
+
+```bash
+go install github.com/goreleaser/goreleaser/v2@latest
+goreleaser release --snapshot --clean
+```
+
+tag を作って push する。
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+release workflow は macOS、Linux、Windows の amd64 / arm64 向け archive と checksums file をアップロードする。
+
 ## 使い方
 
 ```bash

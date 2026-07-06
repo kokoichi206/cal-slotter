@@ -1,6 +1,6 @@
 module github.com/kokoichi206/cal-slotter
 
-go 1.24.0
+go 1.26.4
 
 require golang.org/x/oauth2 v0.31.0
 
