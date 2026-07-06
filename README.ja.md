@@ -78,6 +78,13 @@ slotter auth
 
 `v*` tag を push すると、GitHub Actions 上の GoReleaser が GitHub Release を作成する。
 
+release tag は以下を満たす必要がある。
+
+1. `v0.1.0` のような `vMAJOR.MINOR.PATCH` 形式である
+2. 現在の `origin/main` commit を指している
+3. 既存の release tag より新しい
+4. 同じ tag の GitHub Release がまだ存在しない
+
 tag を打つ前に、ローカルで release artifact を確認する。
 
 ```bash
