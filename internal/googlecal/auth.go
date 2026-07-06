@@ -22,6 +22,7 @@ const authTimeout = 5 * time.Minute
 var calendarScopes = []string{
 	"https://www.googleapis.com/auth/calendar.events",
 	"https://www.googleapis.com/auth/calendar.freebusy",
+	"https://www.googleapis.com/auth/meetings.space.settings",
 }
 
 // Authenticate runs the OAuth desktop flow and writes the resulting token.

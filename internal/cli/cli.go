@@ -248,6 +248,7 @@ func runHold(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	strategy := fs.String("strategy", string(slotter.SelectionBalanced), "slot selection strategy: balanced or early")
 	debugOutput := fs.Bool("debug", false, "output debug details to stderr")
 	sendUpdates := fs.Bool("send-updates", false, "send calendar invitation/update emails")
+	meetArtifacts := fs.Bool("meet-artifacts", false, "add Google Meet and enable auto recording, transcription, and smart notes")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -309,7 +310,7 @@ func runHold(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	if len(slots) == 0 {
 		return errors.New("no hold slots resolved")
 	}
-	if err := service.CreateHolds(context.Background(), *title, slots, members, cfg.Timezone, *sendUpdates); err != nil {
+	if err := service.CreateHolds(context.Background(), *title, slots, members, cfg.Timezone, *sendUpdates, *meetArtifacts); err != nil {
 		return err
 	}
 	fmt.Fprintf(stdout, "created %d hold events\n", len(slots))

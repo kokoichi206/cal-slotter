@@ -4,6 +4,14 @@
 
 Google Calendar の freebusy から複数人の空き時間を探し、仮押さえイベントの作成と確定後の削除を行う CLI。
 
+## 機能
+
+- 複数人の Google Calendar から共通の空き時間を探す
+- 候補枠を Google Calendar に仮押さえイベントとして作成する
+- 確定した枠以外の仮押さえイベントを削除する
+- コマンド実行時に対象メンバーを `--members` で絞り込む
+- 仮押さえイベントに Google Meet を追加し、自動録画・自動文字起こし・Gemini メモを有効化する
+
 ## インストール
 
 macOS / Linux の場合:
@@ -62,6 +70,8 @@ slotter version
 2. OAuth クライアント ID を作成する
 3. アプリケーションの種類は「デスクトップアプリ」を選ぶ
 4. OAuth クライアントの JSON をダウンロードする
+
+`hold --meet-artifacts` で Google Meet の録画・文字起こし・Gemini メモを自動生成する場合は、同じプロジェクトで Google Meet API も有効化する。
 
 ### 2. credentials を配置する
 
@@ -135,13 +145,14 @@ slotter find --duration 60 \
   --count 5
 
 slotter hold \
-  --title "AI 導入プロ-○○様7月初回" \
+  --title "Customer kickoff" \
   --range "2026-07-07 10:00-18:00" \
   --range "2026-07-08 10:00-18:00" \
-  --count 5
+  --count 5 \
+  --meet-artifacts
 
 slotter confirm \
-  --title "AI 導入プロ-○○様7月初回" \
+  --title "Customer kickoff" \
   --keep "2026-07-08 10:30"
 ```
 
@@ -151,7 +162,11 @@ slotter confirm \
 
 `hold` は `--slot` を直接渡せる。`--slot` がなく `--range` がある場合は、内部で `find` と同じ空き検索をして、その候補を仮押さえする。
 
+`confirm` は同じ `--title` の仮押さえイベントから `--keep` の開始時刻に一致する枠だけを残し、それ以外を削除する。
+
 仮押さえ作成と削除時のメール通知はデフォルトで送らない。送る場合だけ `--send-updates` を付ける。
+
+`hold --meet-artifacts` を付けると、仮押さえイベントに Google Meet を追加し、自動録画・自動文字起こし・Gemini メモを有効化する。既存の `token.json` が古いスコープで作られている場合は、`slotter auth` を再実行して許可し直す。
 
 ## 設定
 
