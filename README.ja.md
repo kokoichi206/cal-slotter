@@ -46,29 +46,48 @@ mv ~/Downloads/client_secret_*.json ~/.config/cal-slotter/credentials.json
 ### 4. 初回認証する
 
 ```bash
-go run ./cmd/schedule auth
+go run ./cmd/slotter auth
 ```
 
 表示された URL をブラウザで開き、共有アカウントで許可する。成功すると `~/.config/cal-slotter/token.json` が作られる。
 
+## インストール
+
+```bash
+go install github.com/kokoichi206/cal-slotter/cmd/slotter@latest
+slotter version
+```
+
+リリースビルドでは Go の ldflags で version 情報を埋め込める。
+
+```bash
+go build -ldflags "\
+  -X github.com/kokoichi206/cal-slotter/internal/version.Version=v0.1.0 \
+  -X github.com/kokoichi206/cal-slotter/internal/version.Commit=$(git rev-parse --short HEAD) \
+  -X github.com/kokoichi206/cal-slotter/internal/version.Date=$(date -u +%Y-%m-%d)" \
+  ./cmd/slotter
+```
+
 ## 使い方
 
 ```bash
-go run ./cmd/schedule find --duration 60 \
+go run ./cmd/slotter find --duration 60 \
   --range "2026-07-07 10:00-18:00" \
   --range "2026-07-08 10:00-18:00" \
   --count 5
 
-go run ./cmd/schedule hold \
+go run ./cmd/slotter hold \
   --title "AI 導入プロ-○○様7月初回" \
   --range "2026-07-07 10:00-18:00" \
   --range "2026-07-08 10:00-18:00" \
   --count 5
 
-go run ./cmd/schedule confirm \
+go run ./cmd/slotter confirm \
   --title "AI 導入プロ-○○様7月初回" \
   --keep "2026-07-08 10:30"
 ```
+
+インストール後は `go run ./cmd/slotter` を `slotter` に置き換えて実行できる。
 
 候補がない場合、stdout は空のまま stderr に `no available slots found` を出す。JSON で確認したい場合は `--json` を付ける。
 

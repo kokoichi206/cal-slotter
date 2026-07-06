@@ -46,29 +46,48 @@ Create `~/.config/cal-slotter/config.json`.
 ### 4. Authenticate once
 
 ```bash
-go run ./cmd/schedule auth
+go run ./cmd/slotter auth
 ```
 
 Open the printed URL in a browser and authorize with the shared Google account. On success, `~/.config/cal-slotter/token.json` is created.
 
+## Install
+
+```bash
+go install github.com/kokoichi206/cal-slotter/cmd/slotter@latest
+slotter version
+```
+
+Release builds can embed version metadata with Go ldflags.
+
+```bash
+go build -ldflags "\
+  -X github.com/kokoichi206/cal-slotter/internal/version.Version=v0.1.0 \
+  -X github.com/kokoichi206/cal-slotter/internal/version.Commit=$(git rev-parse --short HEAD) \
+  -X github.com/kokoichi206/cal-slotter/internal/version.Date=$(date -u +%Y-%m-%d)" \
+  ./cmd/slotter
+```
+
 ## Usage
 
 ```bash
-go run ./cmd/schedule find --duration 60 \
+go run ./cmd/slotter find --duration 60 \
   --range "2026-07-07 10:00-18:00" \
   --range "2026-07-08 10:00-18:00" \
   --count 5
 
-go run ./cmd/schedule hold \
+go run ./cmd/slotter hold \
   --title "Customer kickoff" \
   --range "2026-07-07 10:00-18:00" \
   --range "2026-07-08 10:00-18:00" \
   --count 5
 
-go run ./cmd/schedule confirm \
+go run ./cmd/slotter confirm \
   --title "Customer kickoff" \
   --keep "2026-07-08 10:30"
 ```
+
+After installation, replace `go run ./cmd/slotter` with `slotter`.
 
 When no slot is available, stdout stays empty and stderr prints `no available slots found`. Use `--json` to inspect the machine-readable result.
 
