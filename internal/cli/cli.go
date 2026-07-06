@@ -330,7 +330,7 @@ func runConfirm(args []string, stdout, stderr io.Writer) error {
 	configureSharedFlags(fs, &cfg)
 	title := fs.String("title", "", "case title")
 	keepValue := fs.String("keep", "", "slot to keep: YYYY-MM-DD HH:MM")
-	sendUpdates := fs.Bool("send-updates", false, "send calendar deletion/update emails")
+	sendUpdates := fs.Bool("send-updates", false, "send calendar confirmation/update emails")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
