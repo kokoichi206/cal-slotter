@@ -15,6 +15,7 @@ import (
 	"github.com/kokoichi206/cal-slotter/internal/googlecal"
 	"github.com/kokoichi206/cal-slotter/internal/slotter"
 	"github.com/kokoichi206/cal-slotter/internal/timefmt"
+	"github.com/kokoichi206/cal-slotter/internal/update"
 	"github.com/kokoichi206/cal-slotter/internal/version"
 )
 
@@ -64,6 +65,8 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		return runHold(args[1:], stdin, stdout, stderr)
 	case "confirm":
 		return runConfirm(args[1:], stdout, stderr)
+	case "update":
+		return runUpdate(args[1:], stdout, stderr)
 	case "version":
 		return runVersion(args[1:], stdout, stderr)
 	case "help", "-h", "--help":
@@ -84,6 +87,35 @@ func runVersion(args []string, stdout, stderr io.Writer) error {
 		return fmt.Errorf("version does not accept arguments: %s", strings.Join(fs.Args(), " "))
 	}
 	fmt.Fprintln(stdout, version.Current().String())
+	return nil
+}
+
+func runUpdate(args []string, stdout, stderr io.Writer) error {
+	fs := newFlagSet("slotter update", stderr)
+	dryRun := fs.Bool("dry-run", false, "check the latest release without installing")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if fs.NArg() > 0 {
+		return fmt.Errorf("update does not accept arguments: %s", strings.Join(fs.Args(), " "))
+	}
+
+	result, err := update.Run(context.Background(), nil, update.Options{
+		CurrentVersion: version.Version,
+		DryRun:         *dryRun,
+	})
+	if err != nil {
+		return err
+	}
+	if result.CurrentVersion == result.LatestVersion {
+		fmt.Fprintf(stdout, "slotter is already up to date: %s\n", result.CurrentVersion)
+		return nil
+	}
+	if *dryRun {
+		fmt.Fprintf(stdout, "slotter %s is available: %s\n", result.LatestVersion, result.ReleaseURL)
+		return nil
+	}
+	fmt.Fprintf(stdout, "updated slotter from %s to %s\n", result.CurrentVersion, result.LatestVersion)
 	return nil
 }
 
@@ -578,5 +610,5 @@ func newFlagSet(name string, stderr io.Writer) *flag.FlagSet {
 }
 
 func printUsage(w io.Writer) {
-	fmt.Fprintln(w, "usage: slotter <auth|find|hold|confirm|version> [options]")
+	fmt.Fprintln(w, "usage: slotter <auth|find|hold|confirm|update|version> [options]")
 }

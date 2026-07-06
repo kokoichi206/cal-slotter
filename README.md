@@ -6,9 +6,34 @@ A CLI tool for finding shared availability across multiple Google Calendars, cre
 
 ## Install
 
-Download the archive for your OS and CPU from the [latest GitHub Release](https://github.com/kokoichi206/cal-slotter/releases/latest), then place the `slotter` binary somewhere on your `PATH`.
-
 For macOS or Linux:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kokoichi206/cal-slotter/main/scripts/install.sh | sh
+slotter version
+```
+
+The installer downloads the latest binary from [GitHub Releases](https://github.com/kokoichi206/cal-slotter/releases/latest) and installs it to `~/.local/bin`. Set `SLOTTER_INSTALL_DIR` to use another directory.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kokoichi206/cal-slotter/main/scripts/install.sh | SLOTTER_INSTALL_DIR=/usr/local/bin sh
+```
+
+To update an existing install:
+
+```bash
+slotter update
+```
+
+To check the latest release without installing it:
+
+```bash
+slotter update --dry-run
+```
+
+You can also download the archive for your OS and CPU from the [latest GitHub Release](https://github.com/kokoichi206/cal-slotter/releases/latest), then place the `slotter` binary somewhere on your `PATH`.
+
+Manual macOS or Linux install:
 
 ```bash
 tar -xzf slotter_*.tar.gz
