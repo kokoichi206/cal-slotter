@@ -78,6 +78,13 @@ Open the printed URL in a browser and authorize with the shared Google account. 
 
 Releases are built by GoReleaser on GitHub Actions when a `v*` tag is pushed.
 
+Release tags must:
+
+1. Use the `vMAJOR.MINOR.PATCH` format, such as `v0.1.0`.
+2. Point to the current `origin/main` commit.
+3. Be newer than existing release tags.
+4. Not already have a GitHub Release with the same tag.
+
 Before tagging, verify the release artifacts locally:
 
 ```bash
