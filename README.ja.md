@@ -98,3 +98,7 @@ go run ./cmd/schedule confirm \
 `calendar_id` は仮押さえイベントを作成・削除する共有アカウント側のカレンダー ID。通常は `primary` を使う。
 
 仮押さえ作成と削除時のメール通知はデフォルトで送らない。通知を送る場合だけ `hold` または `confirm` に `--send-updates` を付ける。
+
+## ライセンス
+
+[MIT](LICENSE)
