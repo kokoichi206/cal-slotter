@@ -162,9 +162,9 @@ When no slot is available, stdout stays empty and stderr prints `no available sl
 
 `hold` can accept explicit `--slot` values. When `--slot` is omitted and `--range` is provided, it runs the same availability search as `find` and creates holds for the selected slots.
 
-`confirm` keeps the hold event whose start time matches `--keep` for the same `--title` and deletes the other matching hold events.
+`confirm` keeps the hold event whose start time matches `--keep` for the same `--title`, renames it back to `--title`, and deletes the other matching hold events.
 
-Calendar invitation and deletion emails are not sent by default. Add `--send-updates` only when you want Google Calendar to send update emails.
+Calendar invitation and confirmation emails are not sent by default. Add `--send-updates` only when you want Google Calendar to send update emails. `confirm` does not send cancellation emails for deleted unselected holds.
 
 Add `--meet-artifacts` to `hold` to attach Google Meet and enable automatic recording, transcription, and Gemini notes. If your existing `token.json` was created before this scope was added, run `slotter auth` again and grant the new permission.
 
@@ -187,7 +187,7 @@ The default config file is `~/.config/cal-slotter/config.json`. Use `--config` t
 
 `calendar_id` is the calendar on the shared account where hold events are created and deleted. `primary` is usually the right value.
 
-Hold creation and deletion do not send email updates by default. Add `--send-updates` to `hold` or `confirm` when email updates should be sent.
+Hold creation and confirmation do not send email updates by default. Add `--send-updates` to `hold` or `confirm` when email updates should be sent. `confirm` does not send cancellation emails for deleted unselected holds.
 
 ## License
 

@@ -307,6 +307,7 @@ func (s *Service) Confirm(ctx context.Context, title string, keep time.Time, sen
 		return 0, err
 	}
 
+	var keepEvent event
 	keepFound := false
 	for _, event := range events {
 		start, err := eventStart(event)
@@ -314,12 +315,16 @@ func (s *Service) Confirm(ctx context.Context, title string, keep time.Time, sen
 			return 0, err
 		}
 		if sameMinute(start, keep) {
+			keepEvent = event
 			keepFound = true
 			break
 		}
 	}
 	if !keepFound {
 		return 0, fmt.Errorf("keep slot not found for %q at %s", holdTitle, keep.Format(time.RFC3339))
+	}
+	if err := s.updateEventSummary(ctx, keepEvent.ID, title, sendUpdates); err != nil {
+		return 0, fmt.Errorf("rename confirmed hold %s: %w", keepEvent.ID, err)
 	}
 
 	deleted := 0
@@ -332,7 +337,7 @@ func (s *Service) Confirm(ctx context.Context, title string, keep time.Time, sen
 			continue
 		}
 		endpoint := calendarAPIBase + "/calendars/" + url.PathEscape(s.calendarID) + "/events/" + url.PathEscape(event.ID)
-		query := url.Values{"sendUpdates": []string{sendUpdatesValue(sendUpdates)}}
+		query := url.Values{"sendUpdates": []string{sendUpdatesValue(false)}}
 		if err := s.doJSON(ctx, http.MethodDelete, endpoint, query, nil, nil); err != nil {
 			return deleted, fmt.Errorf("delete hold %s: %w", event.ID, err)
 		}
@@ -340,6 +345,12 @@ func (s *Service) Confirm(ctx context.Context, title string, keep time.Time, sen
 	}
 
 	return deleted, nil
+}
+
+func (s *Service) updateEventSummary(ctx context.Context, eventID string, summary string, sendUpdates bool) error {
+	endpoint := calendarAPIBase + "/calendars/" + url.PathEscape(s.calendarID) + "/events/" + url.PathEscape(eventID)
+	query := url.Values{"sendUpdates": []string{sendUpdatesValue(sendUpdates)}}
+	return s.doJSON(ctx, http.MethodPatch, endpoint, query, event{Summary: summary}, nil)
 }
 
 func sendUpdatesValue(sendUpdates bool) string {
