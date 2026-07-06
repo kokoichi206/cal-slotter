@@ -98,3 +98,7 @@ The default config file is `~/.config/cal-slotter/config.json`. Use `--config` t
 `calendar_id` is the calendar on the shared account where hold events are created and deleted. `primary` is usually the right value.
 
 Hold creation and deletion do not send email updates by default. Add `--send-updates` to `hold` or `confirm` when email updates should be sent.
+
+## License
+
+[MIT](LICENSE)
