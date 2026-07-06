@@ -47,6 +47,7 @@ type findOptions struct {
 	Debug           bool
 }
 
+// Run executes the schedule CLI with explicit streams for testability.
 func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	if len(args) == 0 {
 		printUsage(stderr)

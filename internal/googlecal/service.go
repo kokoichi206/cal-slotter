@@ -16,6 +16,7 @@ import (
 
 const calendarAPIBase = "https://www.googleapis.com/calendar/v3"
 
+// Service wraps Google Calendar operations used by the CLI.
 type Service struct {
 	calendarID string
 	client     *http.Client
@@ -73,10 +74,12 @@ type eventsListResponse struct {
 	NextPageToken string  `json:"nextPageToken"`
 }
 
+// HoldTitle formats the shared title used for temporary hold events.
 func HoldTitle(title string) string {
 	return "【仮押さえ】" + title + " 日程候補"
 }
 
+// Busy returns the union source intervals from all member calendars.
 func (s *Service) Busy(ctx context.Context, members []string, timeMin, timeMax time.Time) ([]slotter.Interval, error) {
 	byMember, err := s.BusyByMember(ctx, members, timeMin, timeMax)
 	if err != nil {
@@ -90,6 +93,7 @@ func (s *Service) Busy(ctx context.Context, members []string, timeMin, timeMax t
 	return intervals, nil
 }
 
+// BusyByMember returns busy intervals keyed by member calendar ID.
 func (s *Service) BusyByMember(ctx context.Context, members []string, timeMin, timeMax time.Time) (map[string][]slotter.Interval, error) {
 	items := make([]freeBusyRequestItem, 0, len(members))
 	for _, member := range members {
@@ -130,6 +134,7 @@ func (s *Service) BusyByMember(ctx context.Context, members []string, timeMin, t
 	return byMember, nil
 }
 
+// CreateHolds creates temporary hold events for the given slots.
 func (s *Service) CreateHolds(ctx context.Context, title string, slots []slotter.Interval, members []string, timezone string, sendUpdates bool) error {
 	attendees := make([]eventAttendee, 0, len(members))
 	for _, member := range members {
@@ -161,6 +166,7 @@ func (s *Service) CreateHolds(ctx context.Context, title string, slots []slotter
 	return nil
 }
 
+// Confirm deletes hold events with the same title except the slot to keep.
 func (s *Service) Confirm(ctx context.Context, title string, keep time.Time, sendUpdates bool) (int, error) {
 	holdTitle := HoldTitle(title)
 	events, err := s.listFutureHolds(ctx, holdTitle)

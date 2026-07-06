@@ -24,6 +24,7 @@ var calendarScopes = []string{
 	"https://www.googleapis.com/auth/calendar.freebusy",
 }
 
+// Authenticate runs the OAuth desktop flow and writes the resulting token.
 func Authenticate(ctx context.Context, credentialsPath, tokenPath string, stdout io.Writer) error {
 	oauthConfig, err := readOAuthConfig(credentialsPath)
 	if err != nil {
@@ -73,6 +74,7 @@ func Authenticate(ctx context.Context, credentialsPath, tokenPath string, stdout
 	return saveToken(tokenPath, token)
 }
 
+// NewService creates a Calendar service from local OAuth files.
 func NewService(ctx context.Context, credentialsPath, tokenPath, calendarID string) (*Service, error) {
 	oauthConfig, err := readOAuthConfig(credentialsPath)
 	if err != nil {

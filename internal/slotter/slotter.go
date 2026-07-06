@@ -5,22 +5,28 @@ import (
 	"time"
 )
 
+// Interval is a half-open time range: Start is inclusive and End is exclusive.
 type Interval struct {
 	Start time.Time `json:"start"`
 	End   time.Time `json:"end"`
 }
 
+// SelectionStrategy controls how candidate slots are chosen.
 type SelectionStrategy string
 
 const (
+	// SelectionBalanced spreads selected slots across days and day periods.
 	SelectionBalanced SelectionStrategy = "balanced"
-	SelectionEarly    SelectionStrategy = "early"
+	// SelectionEarly selects the earliest non-overlapping slots.
+	SelectionEarly SelectionStrategy = "early"
 )
 
+// Duration returns the length of the interval.
 func (i Interval) Duration() time.Duration {
 	return i.End.Sub(i.Start)
 }
 
+// In returns the interval converted to loc.
 func (i Interval) In(loc *time.Location) Interval {
 	return Interval{
 		Start: i.Start.In(loc),
@@ -28,6 +34,7 @@ func (i Interval) In(loc *time.Location) Interval {
 	}
 }
 
+// Merge combines overlapping or adjacent intervals.
 func Merge(intervals []Interval) []Interval {
 	if len(intervals) == 0 {
 		return nil
@@ -53,6 +60,7 @@ func Merge(intervals []Interval) []Interval {
 	return out
 }
 
+// AvailableIntervals subtracts busy intervals from candidate windows.
 func AvailableIntervals(windows, busy []Interval) []Interval {
 	mergedBusy := Merge(busy)
 	var out []Interval
@@ -84,6 +92,7 @@ func AvailableIntervals(windows, busy []Interval) []Interval {
 	return out
 }
 
+// CandidateSlots generates available slots from windows and busy intervals.
 func CandidateSlots(windows, busy []Interval, duration, step time.Duration, count int) []Interval {
 	mergedBusy := Merge(busy)
 	var slots []Interval
@@ -104,6 +113,7 @@ func CandidateSlots(windows, busy []Interval, duration, step time.Duration, coun
 	return slots
 }
 
+// SelectSlots chooses non-overlapping slots according to strategy.
 func SelectSlots(slots []Interval, count int, strategy SelectionStrategy, loc *time.Location) []Interval {
 	switch strategy {
 	case SelectionBalanced:

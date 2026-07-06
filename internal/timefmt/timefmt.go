@@ -10,6 +10,7 @@ import (
 
 var japaneseWeekdays = [...]string{"日", "月", "火", "水", "木", "金", "土"}
 
+// FormatCustomerSlot formats a slot as Japanese customer-facing text.
 func FormatCustomerSlot(slot slotter.Interval) string {
 	weekday := japaneseWeekdays[int(slot.Start.Weekday())]
 	return fmt.Sprintf("%d/%d(%s) %s〜%s",
@@ -21,6 +22,7 @@ func FormatCustomerSlot(slot slotter.Interval) string {
 	)
 }
 
+// ParseWindow parses a CLI window in "YYYY-MM-DD HH:MM-HH:MM" format.
 func ParseWindow(value string, loc *time.Location) (slotter.Interval, error) {
 	date, startText, endText, err := splitDateTimeRange(value)
 	if err != nil {
@@ -42,6 +44,7 @@ func ParseWindow(value string, loc *time.Location) (slotter.Interval, error) {
 	return slotter.Interval{Start: start, End: end}, nil
 }
 
+// ParseKeep parses a confirm keep time in "YYYY-MM-DD HH:MM" format.
 func ParseKeep(value string, loc *time.Location) (time.Time, error) {
 	keep, err := time.ParseInLocation("2006-01-02 15:04", value, loc)
 	if err != nil {
